@@ -1,0 +1,156 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../Utils/Constants.dart';
+
+class ApiService {
+  final String baseUrl = "$API_BASE_URL/api/transactions";
+  final String baseUrlUsers = "$API_BASE_URL/api/users";
+
+  Future<void> addIncome(double amount, String description,String token) async {
+    final url = Uri.parse("$baseUrl/income");
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "amount": amount,
+        "description": description,
+      }),
+    ).timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      print("Ingreso agregado correctamente ✅");
+    } else {
+      throw Exception("Error al agregar ingreso: ${response.body}");
+    }
+  }
+
+  Future<void> addExpense(double amount, String description, String category, String token) async {
+    final url = Uri.parse("$baseUrl/expense");
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "category": category,
+        "amount": amount,
+        "description": description,
+      }),
+    ).timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      print("Gasto agregado correctamente ✅");
+    } else {
+      throw Exception("Error al agregar Gasto: ${response.body}");
+    }
+  }
+
+  Future<Map<String, dynamic>> getMonthlySummary(String token) async {
+    final url = Uri.parse("$baseUrl/monthlySummary");
+    final response = await http.get(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    ).timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Error al obtener resumen: ${response.body}");
+    }
+  }
+
+  Future<Map<String, dynamic>> getExpensesPorcentages(String token) async {
+    final url = Uri.parse("$baseUrl/expenses/percentages");
+    final response = await http.get(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    ).timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Error al obtener percentages: ${response.body}");
+    }
+  }
+
+  Future<void> addDirectSaving(String token, double amount) async {
+    final url = Uri.parse("$baseUrl/saving");
+
+    try {
+      final response = await http
+          .post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "amount": amount,
+        }),
+      )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        print("✅ Direct saving added: ${response.body}");
+      } else {
+        print("❌ Error: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      print("⚠️ Exception: $e");
+    }
+  }
+
+  Future<Map<String, dynamic>> getTotalSavings(String token) async {
+    final url = Uri.parse("$baseUrl/totalSaving");
+
+    final response = await http.get(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    ).timeout(const Duration(seconds: 10)); // ⏳ timeout
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Error al obtener ahorro total: ${response.body}");
+    }
+  }
+
+  Future<Map<String, dynamic>> getRules(String token) async {
+    final url = Uri.parse("$baseUrlUsers/rules");
+
+    final response = await http.get(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    ).timeout(const Duration(seconds: 10)); // ⏳ timeout
+
+    print(response);
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Error al obtener ahorro total: ${response.body}");
+    }
+  }
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString("jwt");
+  }
+}
