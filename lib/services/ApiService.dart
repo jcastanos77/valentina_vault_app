@@ -5,8 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Utils/Constants.dart';
 
 class ApiService {
-  final String baseUrl = "$API_BASE_URL/api/transactions";
-  final String baseUrlUsers = "$API_BASE_URL/api/users";
+  final String baseUrl = "$API_BASE_URL/transactions";
+  final String baseUrlUsers = "$API_BASE_URL/users";
+  final String baseUrlSaving = "$API_BASE_URL/savings";
+  final String baseUrlStats= "$API_BASE_URL/stats";
+
 
   Future<void> addIncome(double amount, String description,String token) async {
     final url = Uri.parse("$baseUrl/income");
@@ -140,12 +143,61 @@ class ApiService {
         "Content-Type": "application/json",
       },
     ).timeout(const Duration(seconds: 10)); // ⏳ timeout
-
-    print(response);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
       throw Exception("Error al obtener ahorro total: ${response.body}");
+    }
+  }
+
+  Future<List<dynamic>> getGoals(String token) async {
+    final url = Uri.parse("$baseUrlSaving/goals");
+
+    final response = await http.get(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    ).timeout(const Duration(seconds: 10)); // ⏳ timeout
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Error al obtener ahorro total: ${response.body}");
+    }
+  }
+
+  Future<void> addGoal(String name, double amountGoal,String token) async {
+    final url = Uri.parse("$baseUrlSaving/add");
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "name": name,
+        "targetAmount": amountGoal,
+      }),
+    ).timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      print("Meta creada correctamente");
+    } else {
+      throw Exception("Error al agregar ingreso: ${response.body}");
+    }
+  }
+
+  Future<Map<String, dynamic>> getMonthlyStats(String token) async {
+    final response = await http.get(
+      Uri.parse("$baseUrlStats/transactionStats"),
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception("Error al obtener estadísticas mensuales");
     }
   }
 

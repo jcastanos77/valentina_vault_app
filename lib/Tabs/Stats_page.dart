@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../model/Transaction.dart';
+import '../services/ApiService.dart';
+import '../services/Auth.dart';
 
 class StatsPage extends StatefulWidget {
   const StatsPage({super.key});
@@ -21,6 +23,28 @@ class _StatsPageState extends State<StatsPage> {
       }
     }
     return spent;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final token = await AuthService().getToken();
+    final data = await ApiService().getMonthlyStats(token!);
+
+    setState(() {
+      print(data);
+      _totalIncome = data["totalIncome"] ?? 0;
+      final categoryData = Map<String, dynamic>.from(data["categories"]);
+      _transactions = (data["transactions"] as List)
+          .map((t) => Transaction.fromJson(t))
+          .toList();
+
+      // puedes recalcular los gastos si quieres
+    });
   }
 
 

@@ -1,6 +1,8 @@
 class SavingsGoal {
   String name;
-  double amount;
+  int amount;
+  int progress;
+  String id;
 
-  SavingsGoal({this.name = '', this.amount = 0});
+  SavingsGoal({this.name = '', this.amount = 0, this.progress = 0, this.id = ''});
 }

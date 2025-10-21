@@ -321,7 +321,7 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Sobrante Deseos:'),
+                    const Text('Sobrante Lujos:'),
                     Text(
                       '+\${lujos.toStringAsFixed(2)}',
                       style: const TextStyle(
@@ -466,7 +466,7 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
                       items: [
                         DropdownMenuItem(value: 'basicos', child: Text('🏠 Necesidades ($_basicosPercent%)')),
                         DropdownMenuItem(value: 'ahorro', child: Text('💰 Ahorros ($_ahorroPercent%)')),
-                        DropdownMenuItem(value: 'lujos', child: Text('🛍️ Deseos ($_lujosPercent%)')),
+                        DropdownMenuItem(value: 'lujos', child: Text('🛍️ Lujos ($_lujosPercent%)')),
                       ],
                       onChanged: (value) {
                         setState(() {

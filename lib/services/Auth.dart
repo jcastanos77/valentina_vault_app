@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../Utils/Constants.dart';
 
 class AuthService {
-  final String baseUrl = "$API_BASE_URL/api/auth";
+  final String baseUrl = "$API_BASE_URL/auth";
 
   Future<bool> register(String name, String email, String password, int basico, int lujos, int ahorro) async {
     final url = Uri.parse("$baseUrl/register");

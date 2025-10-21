@@ -61,7 +61,7 @@ class CategoryProgressCard extends StatelessWidget {
                   children: [
                     Text(
                       category == 'basicos' ? 'Necesidades' :
-                      category == 'ahorro' ? 'Ahorros' : 'Deseos',
+                      category == 'ahorro' ? 'Ahorros' : 'Lujos',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
