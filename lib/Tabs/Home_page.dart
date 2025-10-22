@@ -1,26 +1,29 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:valentinas_vault/Utils/CategoryProgressCard.dart';
 import 'package:valentinas_vault/Utils/ui_helpers.dart';
 
-import '../Utils/ModernCard.dart';
 import '../model/SavingsGoal.dart';
 import '../model/Transaction.dart';
 import '../services/ApiService.dart';
 import '../services/Auth.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin{
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  late AnimationController _fadeController;
   final _apiService = ApiService();
   final _authService = AuthService();
   Map<String, dynamic>? summary;
   Map<String, dynamic>? expansePorcentage;
-  late AnimationController _animationController;
+
   double _totalIncome = 0;
   double _accumulatedSavings = 0;
   int _basicosPercent = 0;
@@ -108,357 +111,260 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
-
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+    _fadeController = AnimationController(
       vsync: this,
-    );
+      duration: const Duration(milliseconds: 800),
+    )..forward();
     _loadSummary();
+  }
+
+  String getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return 'Buenos días ☀️';
+    if (hour >= 12 && hour < 19) return 'Buenas tardes 🌤️';
+    return 'Buenas noches 🌙';
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
-          Text(
-            'Buenos días 👋',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Tu resumen financiero',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF2C3E50),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF667eea).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${getMonthName(DateTime.now().month)} ${DateTime.now().year}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF667eea),
-                  ),
-                ),
-              ),
+
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF1e3c72),
+              Color(0xFF2a5298),
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-
-          const SizedBox(height: 24),
-
-          // Tarjeta de balance principal con glassmorphism
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF667eea),
-                  Color(0xFF764ba2),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF667eea).withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
+        ),
+        child: SafeArea(
+          child: FadeTransition(
+            opacity: _fadeController,
             child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Balance Total',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Saludo y fecha
+                    Text(
+                      getGreeting(),
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        color: Colors.white70,
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.account_balance_wallet_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  AnimatedBuilder(
-                    animation: _animationController,
-                    builder: (context, child) {
-                      return Text(
-                        '\$${formatNumber(summary?['totalIncome']?.toDouble() ?? 0.0)}',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 36,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -1,
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Regla personalizada',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        height: 12,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.white.withOpacity(0.2),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: _basicosPercent,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.blueAccent,
-                                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: _ahorroPercent,
-                              child: Container(color: Colors.greenAccent),
-                            ),
-                            Expanded(
-                              flex: _lujosPercent,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.purpleAccent,
-                                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Básicos ${_basicosPercent}%',
-                            style: const TextStyle(color: Colors.white70, fontSize: 12),
-                          ),
-                          Text(
-                            'Ahorro ${_ahorroPercent}%',
-                            style: const TextStyle(color: Colors.white70, fontSize: 12),
-                          ),
-                          Text(
-                            'Lujo ${_lujosPercent}%',
-                            style: const TextStyle(color: Colors.white70, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Mostrar ahorros acumulados si existen
-          if (_accumulatedSavings > 0) ...[
-            const SizedBox(height: 16),
-            ModernCard(
-              color: const Color(0xFF27AE60).withOpacity(0.1),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF27AE60),
-                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(
-                      Icons.account_balance_rounded,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
+                    const SizedBox(height: 6),
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Ahorros Acumulados',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF2C3E50),
+                        Text(
+                          'Tu resumen financiero',
+                          style: GoogleFonts.poppins(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          ' \$${formatNumber(_accumulatedSavings?.toDouble() ?? 0.0)}',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF27AE60),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              color: Colors.white.withOpacity(0.15),
+                              child: Text(
+                                '${getMonthName(DateTime.now().month)} ${DateTime.now().year}',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ],
 
-          // Categorías con diseño moderno
-          const Text(
-            'Categorías',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF2C3E50),
+                    const SizedBox(height: 30),
+
+                    // Tarjeta principal con blur
+                    _buildGlassCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Balance total',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white70,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const Icon(Icons.wallet_rounded, color: Colors.white70),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            '\$${formatNumber(summary?['totalIncome']?.toDouble() ?? 0.0)}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildProgressBar(
+                            basicos: 50,
+                            ahorro: 30,
+                            lujos: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    Text(
+                      'Categorías',
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Tarjetas de categorías
+                    CategoryProgressCard('basicos', expansePorcentage?['basicosAssigned'].toDouble() ?? 0.0, expansePorcentage?['basicosSpent']?.toDouble() ?? 0.0, expansePorcentage?['basicosPercentageSpent']?.toDouble() ?? 0.0),
+                    const SizedBox(height: 16),
+                    CategoryProgressCard('ahorro', expansePorcentage?['ahorroAssigned']?.toDouble() ?? 0.0, expansePorcentage?['ahorroSpent']?.toDouble() ?? 0.0, expansePorcentage?['ahorroPercentageSpent']?.toDouble() ?? 0.0),
+                    const SizedBox(height: 16),
+                    CategoryProgressCard('lujos', expansePorcentage?['lujosAssigned']?.toDouble() ?? 0.0, expansePorcentage?['lujosSpent']?.toDouble() ?? 0.0, expansePorcentage?['lujosPercentageSpent']?.toDouble() ?? 0.0),
+                    const SizedBox(height: 42),
+                if (_savingsGoal.name.isNotEmpty && _savingsGoal.amount > 0) ...[
+                  _buildGoalCard(),
+                  SizedBox(height: 42),
+                ]
+
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+        ),
+      ),
+    );
+  }
 
-          CategoryProgressCard('basicos', expansePorcentage?['basicosAssigned'].toDouble() ?? 0.0, expansePorcentage?['basicosSpent']?.toDouble() ?? 0.0, expansePorcentage?['basicosPercentageSpent']?.toDouble() ?? 0.0),
-          CategoryProgressCard('ahorro', expansePorcentage?['ahorroAssigned']?.toDouble() ?? 0.0, expansePorcentage?['ahorroSpent']?.toDouble() ?? 0.0, expansePorcentage?['ahorroPercentageSpent']?.toDouble() ?? 0.0),
-          CategoryProgressCard('lujos', expansePorcentage?['lujosAssigned']?.toDouble() ?? 0.0, expansePorcentage?['lujosSpent']?.toDouble() ?? 0.0, expansePorcentage?['lujosPercentageSpent']?.toDouble() ?? 0.0),
+  Widget _buildGlassCard({required Widget child}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
 
-          // Meta de ahorro moderna
-          if (_savingsGoal.name.isNotEmpty && _savingsGoal.amount > 0) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Tu Meta',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF2C3E50),
-              ),
-            ),
-            const SizedBox(height: 16),
-           ModernCard(
-              color: const Color(0xFFF39C12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(
-                          Icons.flag_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _savingsGoal.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            Text(
-                              'Meta: \$${_savingsGoal.amount.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: FractionallySizedBox(
-                      widthFactor: currentSavings > 0
-                          ? (currentSavings / _savingsGoal.amount).clamp(0.0, 1.0)
-                          : 0.0,
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '${currentSavings > 0 ? ((currentSavings / _savingsGoal.amount) * 100).toStringAsFixed(1) : "0.0"}% completado',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+  Widget _buildProgressBar({required int basicos, required int ahorro, required int lujos}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 10,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white.withOpacity(0.3),
+          ),
+          child: Row(
+            children: [
+              Expanded(flex: basicos, child: Container(color: Colors.blueAccent)),
+              Expanded(flex: ahorro, child: Container(color: Colors.greenAccent)),
+              Expanded(flex: lujos, child: Container(color: Colors.purpleAccent)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Básicos $basicos%',
+                style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            Text('Ahorro $ahorro%',
+                style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            Text('Lujo $lujos%',
+                style: const TextStyle(color: Colors.white70, fontSize: 12)),
           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGoalCard() {
+    return _buildGlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.flag_rounded, color: Colors.white, size: 26),
+              const SizedBox(width: 12),
+              Text(
+                _savingsGoal.name,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            height: 8,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: FractionallySizedBox(
+              widthFactor: 0.45,
+              alignment: Alignment.centerLeft,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Meta: \$${_savingsGoal.amount.toStringAsFixed(2)}',
+            style: GoogleFonts.inter(
+              color: Colors.white70,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
