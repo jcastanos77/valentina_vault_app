@@ -1,5 +1,5 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-
 import '../model/Transaction.dart';
 import '../services/ApiService.dart';
 import '../services/Auth.dart';
@@ -15,11 +15,13 @@ class _StatsPageState extends State<StatsPage> {
   double _totalIncome = 0;
   List<Transaction> _transactions = [];
 
+  // 💰 Cálculo de gastos por categoría
   Map<String, double> get spentByCategory {
     Map<String, double> spent = {'basicos': 0, 'ahorro': 0, 'lujos': 0};
     for (var transaction in _transactions) {
       if (transaction.type == 'expense') {
-        spent[transaction.category] = (spent[transaction.category] ?? 0) + transaction.amount;
+        spent[transaction.category] =
+            (spent[transaction.category] ?? 0) + transaction.amount;
       }
     }
     return spent;
@@ -36,17 +38,12 @@ class _StatsPageState extends State<StatsPage> {
     final data = await ApiService().getMonthlyStats(token!);
 
     setState(() {
-      print(data);
       _totalIncome = data["totalIncome"] ?? 0;
-      final categoryData = Map<String, dynamic>.from(data["categories"]);
       _transactions = (data["transactions"] as List)
           .map((t) => Transaction.fromJson(t))
           .toList();
-
-      // puedes recalcular los gastos si quieres
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -54,88 +51,105 @@ class _StatsPageState extends State<StatsPage> {
         .where((t) => t.type == 'expense')
         .fold(0, (sum, t) => sum + t.amount);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Estadísticas',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
+    const Color darkBlue = Color(0xFF1e3c72);
+    const Color lightBlue = Color(0xFF2a5298);
 
-          // Resumen general
-          Row(
-            children: [
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FB),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            const Text(
+              'Estadísticas',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // 📊 Resumen general
+            Row(
+              children: [
+                Expanded(
+                  child: _GlassCard(
+                    gradient: const LinearGradient(
+                      colors: [darkBlue, lightBlue],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     child: Column(
                       children: [
-                        const Icon(Icons.trending_up, size: 32, color: Colors.green),
+                        const Icon(Icons.trending_up,
+                            size: 32, color: Colors.white),
                         const SizedBox(height: 8),
-                        Text('Ingresos', style: TextStyle(color: Colors.grey[600])),
+                        const Text('Ingresos',
+                            style: TextStyle(color: Colors.white70)),
                         Text(
                           '\$${_totalIncome.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.green,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _GlassCard(
+                    gradient: const LinearGradient(
+                      colors: [darkBlue, lightBlue],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     child: Column(
                       children: [
-                        const Icon(Icons.account_balance_wallet, size: 32, color: Colors.red),
+                        const Icon(Icons.account_balance_wallet,
+                            size: 32, color: Colors.white),
                         const SizedBox(height: 8),
-                        Text('Gastos Totales', style: TextStyle(color: Colors.grey[600])),
+                        const Text('Gastos',
+                            style: TextStyle(color: Colors.white70)),
                         Text(
                           '\$${totalExpenses.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.red,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: 20),
 
-          const SizedBox(height: 20),
-
-          // Distribución por categoría
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+            // 📈 Distribución por categoría
+            _GlassCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'Distribución de Gastos',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B)),
                   ),
                   const SizedBox(height: 16),
                   ...spentByCategory.entries.map((entry) {
                     String category = entry.key;
                     double amount = entry.value;
-                    double percentage = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0;
-                    Color color = category == 'basicos' ? Colors.green :
-                    (category == 'ahorro' ? Colors.blue : Colors.purple);
+                    double percentage =
+                    totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0;
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -144,21 +158,29 @@ class _StatsPageState extends State<StatsPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                category.toUpperCase(),
-                                style: const TextStyle(fontWeight: FontWeight.w500),
-                              ),
+                              Text(category.toUpperCase(),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF1E293B))),
                               Text(
                                 '\$${amount.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E293B)),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          LinearProgressIndicator(
-                            value: percentage / 100,
-                            backgroundColor: Colors.grey[300],
-                            valueColor: AlwaysStoppedAnimation<Color>(color),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: percentage / 100,
+                              minHeight: 8,
+                              backgroundColor:
+                              Colors.white.withOpacity(0.4),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                  lightBlue),
+                            ),
                           ),
                         ],
                       ),
@@ -167,67 +189,132 @@ class _StatsPageState extends State<StatsPage> {
                 ],
               ),
             ),
-          ),
+            const SizedBox(height: 20),
 
-          const SizedBox(height: 20),
-
-          // Últimas transacciones
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+            // 💸 Últimas transacciones
+            _GlassCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'Últimas Transacciones',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B)),
                   ),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    height: 300,
-                    child: ListView.builder(
-                      itemCount: _transactions.length > 10 ? 10 : _transactions.length,
+                  if (_transactions.isEmpty)
+                    const Center(
+                      child: Text("Sin transacciones recientes 💤",
+                          style: TextStyle(color: Colors.grey)),
+                    )
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount:
+                      _transactions.length > 8 ? 8 : _transactions.length,
                       itemBuilder: (context, index) {
-                        Transaction transaction = _transactions.reversed.toList()[index];
-                        Color categoryColor = transaction.category == 'basicos' ? Colors.green :
-                        (transaction.category == 'ahorro' ? Colors.blue : Colors.purple);
+                        Transaction transaction =
+                        _transactions.reversed.toList()[index];
 
-                        return Card(
-                          color: Colors.grey[50],
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: Colors.white.withOpacity(0.3)),
+                          ),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: categoryColor,
+                              backgroundColor: lightBlue,
                               child: Icon(
-                                transaction.category == 'basicos' ? Icons.home :
-                                (transaction.category == 'ahorro' ? Icons.savings : Icons.shopping_bag),
+                                transaction.category == 'basicos'
+                                    ? Icons.home
+                                    : transaction.category == 'ahorro'
+                                    ? Icons.savings
+                                    : Icons.shopping_bag,
                                 color: Colors.white,
                                 size: 20,
                               ),
                             ),
                             title: Text(
                               transaction.description,
-                              style: const TextStyle(fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1E293B)),
                             ),
                             subtitle: Text(
                               '${transaction.category.toUpperCase()} • ${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
+                              style: const TextStyle(color: Colors.grey),
                             ),
                             trailing: Text(
-                              '\$${transaction.amount.toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              (transaction.type == 'income' ? '+' : '-') +
+                                  '\$${transaction.amount.toStringAsFixed(2)}',
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.red,
+                                color: transaction.type == 'income'
+                                    ? lightBlue
+                                    : Colors.redAccent,
                               ),
                             ),
                           ),
                         );
                       },
                     ),
-                  ),
                 ],
               ),
             ),
+            SizedBox(height: 65,)
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 🌫️ Card con efecto glass + soporte para gradiente
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  final Gradient? gradient;
+  const _GlassCard({required this.child, this.gradient});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: gradient ??
+                LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.6),
+                    Colors.white.withOpacity(0.4)
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
+          child: child,
+        ),
       ),
     );
   }

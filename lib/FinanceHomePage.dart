@@ -131,7 +131,7 @@ class _FinanceHomePageState extends State<FinanceHomePage>
               icon,
               size: 22,
               color: isSelected
-                  ? Colors.black
+                  ? Colors.black54
                   : Colors.white
             ),
             const SizedBox(height: 2),
@@ -142,7 +142,7 @@ class _FinanceHomePageState extends State<FinanceHomePage>
                 fontWeight:
                 isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: isSelected
-                    ? Colors.black
+                    ? Colors.black54
                     : Colors.white
               ),
             ),
