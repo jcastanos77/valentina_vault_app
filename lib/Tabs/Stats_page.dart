@@ -268,6 +268,7 @@ class _StatsPageState extends State<StatsPage> {
               ),
             ),
             SizedBox(height: 65,)
+
           ],
         ),
       ),
