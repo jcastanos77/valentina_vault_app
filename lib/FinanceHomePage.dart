@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:valentinas_vault/Login.dart';
 import 'package:valentinas_vault/Tabs/Goal_page.dart';
 import 'package:valentinas_vault/Tabs/Home_page.dart';
 import 'package:valentinas_vault/Tabs/Stats_page.dart';
@@ -28,13 +30,13 @@ class _FinanceHomePageState extends State<FinanceHomePage>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
         title: Text(
-          'Mi Billetera 💸',
+          'Mi Billetera',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w600,
             color: isDark ? Colors.white : Colors.black87,
@@ -43,14 +45,28 @@ class _FinanceHomePageState extends State<FinanceHomePage>
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        // 🔹 Esta parte es clave
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness:
-          isDark ? Brightness.light : Brightness.dark, // Android
-          statusBarBrightness:
-          isDark ? Brightness.dark : Brightness.light, // iOS
+          isDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Color(0xFF1e3c72)),
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              if (!mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => LoginScreen()),
+                    (route) => false,
+              );
+            },
+            tooltip: "Cerrar sesión",
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -59,42 +75,48 @@ class _FinanceHomePageState extends State<FinanceHomePage>
             child: pages[_currentIndex],
           ),
 
-          // 🔹 Custom Bottom Bar flotante
-          Positioned(
+          // 🔹 Bottom bar con animación cuando se abre el teclado
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
             left: 20,
             right: 20,
-            bottom: 18,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(22),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                child: Container(
-                  height: 58,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.08)
-                        : Colors.white.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.25),
-                      width: 1.2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
+            bottom: isKeyboardOpen ? -100 : 18, // 👈 se esconde con teclado
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: isKeyboardOpen ? 0 : 1,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                  child: Container(
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.white.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.25),
+                        width: 1.2,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildNavItem(Icons.home_rounded, 'Inicio', 0, isDark),
-                      _buildNavItem(Icons.add_circle_rounded, 'Agregar', 1, isDark),
-                      _buildNavItem(Icons.flag_rounded, 'Metas', 2, isDark),
-                      _buildNavItem(Icons.bar_chart_rounded, 'Stats', 3, isDark),
-                    ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 12,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildNavItem(Icons.home_rounded, 'Inicio', 0, isDark),
+                        _buildNavItem(Icons.add_circle_rounded, 'Agregar', 1, isDark),
+                        _buildNavItem(Icons.flag_rounded, 'Metas', 2, isDark),
+                        _buildNavItem(Icons.bar_chart_rounded, 'Stats', 3, isDark),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -130,20 +152,15 @@ class _FinanceHomePageState extends State<FinanceHomePage>
             Icon(
               icon,
               size: 22,
-              color: isSelected
-                  ? Colors.black54
-                  : Colors.white
+              color: isSelected ? Colors.black54 : Colors.white,
             ),
             const SizedBox(height: 2),
             Text(
               label,
               style: GoogleFonts.inter(
                 fontSize: 11,
-                fontWeight:
-                isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected
-                    ? Colors.black54
-                    : Colors.white
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? Colors.black54 : Colors.white,
               ),
             ),
           ],

@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../Utils/showSnackBar.dart';
 import '../model/SavingsGoal.dart';
 import '../model/Transaction.dart';
 import '../services/ApiService.dart';
@@ -25,11 +24,12 @@ class _GoalPageState extends State<GoalPage> {
   final _apiService = ApiService();
   final _authService = AuthService();
 
-  Map<String, double> get budgets => {
-    'basicos': _totalIncome * 0.5,
-    'ahorro': _totalIncome * 0.3,
-    'lujos': _totalIncome * 0.2,
-  };
+  Map<String, double> get budgets =>
+      {
+        'basicos': _totalIncome * 0.5,
+        'ahorro': _totalIncome * 0.3,
+        'lujos': _totalIncome * 0.2,
+      };
 
   Map<String, double> get spentByCategory {
     Map<String, double> spent = {'basicos': 0, 'ahorro': 0, 'lujos': 0};
@@ -95,12 +95,13 @@ class _GoalPageState extends State<GoalPage> {
 
       setState(() {
         _goals = data
-            .map<SavingsGoal>((goal) => SavingsGoal(
-          name: goal["name"] ?? "",
-          amount: (goal["targetAmount"] ?? 0).toDouble(),
-          progress: (goal["progress"] ?? 0).toDouble(),
-          id: goal["id"],
-        ))
+            .map<SavingsGoal>((goal) =>
+            SavingsGoal(
+              name: goal["name"] ?? "",
+              amount: (goal["targetAmount"] ?? 0).toDouble(),
+              progress: (goal["progress"] ?? 0).toDouble(),
+              id: goal["id"],
+            ))
             .toList();
       });
     } catch (e) {
@@ -118,216 +119,255 @@ class _GoalPageState extends State<GoalPage> {
   Widget build(BuildContext context) {
     final Color primary = const Color(0xFF667EEA);
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF1e3c72),
-            Color(0xFF2a5298),],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return GestureDetector(
+      onTap: () {
+        FocusScopeNode currentFocus = FocusScope.of(context);
+        if (!currentFocus.hasPrimaryFocus &&
+            currentFocus.focusedChild != null) {
+          currentFocus.focusedChild!.unfocus();
+        }
+      },
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF1e3c72),
+              Color(0xFF2a5298),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              const Text(
-                'Metas de Ahorro',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // 🧾 Formulario con efecto glass
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(20),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight, // 👈 fuerza altura mínima
+                  ),
+                  child: IntrinsicHeight(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextFormField(
-                          controller: _goalNameController,
-                          decoration: InputDecoration(
-                            labelText: 'Nombre de la meta',
-                            hintText: 'Ej: Vacaciones, Auto nuevo, etc.',
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.6),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Metas de Ahorro',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _goalAmountController,
-                          decoration: InputDecoration(
-                            labelText: 'Cantidad objetivo',
-                            prefixText: '\$',
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.6),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d*\.?\d{0,2}')),
-                          ],
                         ),
                         const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: isLoading ? null : _addGoal,
-                            icon:
-                            const Icon(Icons.flag_rounded, color: Colors.white),
-                            label: const Text('Agregar Meta', style: TextStyle(color: Colors.white),),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              textStyle: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
 
-              const SizedBox(height: 20),
-
-              // 📋 Lista de metas
-              if (_goals.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 20),
-                    child: Text(
-                      "No tienes metas registradas aún 💤",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 65),
-              if (_goals.isNotEmpty)
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _goals.length,
-                  itemBuilder: (context, index) {
-                    final goal = _goals[index];
-                    final progreso =
-                        currentSavings / (goal.amount > 0 ? goal.amount : 1);
-                    final porcentaje =
-                    (progreso.clamp(0, 1) * 100).toStringAsFixed(1);
-
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.65),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                goal.name,
-                                style: const TextStyle(
-                                  color: Color(0xFF1E293B),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                        // 🧾 Formulario glass
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.6),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 1,
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
                                 children: [
-                                  const Text('Progreso:',
-                                      style: TextStyle(color: Colors.grey)),
-                                  Text(
-                                    '\$${currentSavings.toStringAsFixed(2)} / \$${goal.amount.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      color: Color(0xFF1E293B),
-                                      fontWeight: FontWeight.w600,
+                                  TextFormField(
+                                    controller: _goalNameController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Nombre de la meta',
+                                      hintText: 'Ej: Vacaciones, Auto nuevo, etc.',
+                                      filled: true,
+                                      fillColor: Colors.white.withOpacity(0.6),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: _goalAmountController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Cantidad objetivo',
+                                      prefixText: '\$',
+                                      filled: true,
+                                      fillColor: Colors.white.withOpacity(0.6),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
+                                    keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'^\d*\.?\d{0,2}')),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: isLoading ? null : _addGoal,
+                                      icon: const Icon(Icons.flag_rounded,
+                                          color: Colors.white),
+                                      label: const Text(
+                                        'Agregar Meta',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              12),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 14),
+                                        textStyle: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 10),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: LinearProgressIndicator(
-                                  value: progreso.clamp(0, 1),
-                                  minHeight: 8,
-                                  backgroundColor: Colors.white.withOpacity(0.4),
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    primary,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Center(
-                                child: Text(
-                                  '$porcentaje% completado',
-                                  style: TextStyle(
-                                    color: primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+
+                        const SizedBox(height: 20),
+
+                        Expanded(
+                          child: _goals.isEmpty
+                              ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 20),
+                              child: Text(
+                                "No tienes metas registradas aún 💤",
+                                style: TextStyle(
+                                    color: Colors.white70, fontSize: 16),
+                              ),
+                            ),
+                          )
+                              : ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _goals.length,
+                            itemBuilder: (context, index) {
+                              final goal = _goals[index];
+                              final progreso = currentSavings /
+                                  (goal.amount > 0 ? goal.amount : 1);
+                              final porcentaje = (progreso.clamp(0, 1) * 100)
+                                  .toStringAsFixed(1);
+
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: BackdropFilter(
+                                  filter:
+                                  ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                  child: Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 8),
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.65),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          goal.name,
+                                          style: const TextStyle(
+                                            color: Color(0xFF1E293B),
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            const Text('Progreso:',
+                                                style: TextStyle(
+                                                    color: Colors.grey)),
+                                            Text(
+                                              '\$${currentSavings
+                                                  .toStringAsFixed(
+                                                  2)} / \$${goal.amount
+                                                  .toStringAsFixed(2)}',
+                                              style: const TextStyle(
+                                                color: Color(0xFF1E293B),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        ClipRRect(
+                                          borderRadius:
+                                          BorderRadius.circular(10),
+                                          child: LinearProgressIndicator(
+                                            value: progreso.clamp(0, 1),
+                                            minHeight: 8,
+                                            backgroundColor: Colors.white
+                                                .withOpacity(0.4),
+                                            valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              primary,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Center(
+                                          child: Text(
+                                            '$porcentaje% completado',
+                                            style: TextStyle(
+                                              color: primary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                        const SizedBox(height: 65),
+                      ],
+                    ),
+                  ),
                 ),
-              const SizedBox(height: 65),
-            ],
+              );
+            },
           ),
         ),
       ),
     );
-  }
-}
+  }}

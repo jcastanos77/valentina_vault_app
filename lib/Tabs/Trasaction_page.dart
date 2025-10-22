@@ -171,143 +171,150 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF1e3c72),
-            Color(0xFF2a5298),],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return GestureDetector(
+      onTap: (){
+        FocusScopeNode currentFocus = FocusScope.of(context);
+        if (!currentFocus.hasPrimaryFocus && currentFocus.focusedChild != null) {
+          currentFocus.focusedChild!.unfocus();
+        }
+      },
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF1e3c72),
+              Color(0xFF2a5298),],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Nueva transacción',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Nueva transacción',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              _glassCard(
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Tipo de transacción',
-                        style: TextStyle(color: Colors.white70, fontSize: 15)),
-                    const SizedBox(height: 8),
-                    _dropdownField(
-                      value: _selectedTransactionType,
-                      items: const [
-                        DropdownMenuItem(value: 'income', child: Text('💰 Ingreso')),
-                        DropdownMenuItem(value: 'expense', child: Text('💳 Gasto')),
-                      ],
-                      onChanged: (v) => setState(() => _selectedTransactionType = v!),
-                    ),
-                    if (_selectedTransactionType == 'expense') ...[
-                      const SizedBox(height: 16),
-                      const Text('Categoría',
+                _glassCard(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Tipo de transacción',
                           style: TextStyle(color: Colors.white70, fontSize: 15)),
                       const SizedBox(height: 8),
                       _dropdownField(
-                        value: _selectedCategory,
-                        items: [
-                          DropdownMenuItem(value: 'basicos', child: Text('🏠 Necesidades ($_basicosPercent%)')),
-                          DropdownMenuItem(value: 'ahorro', child: Text('💰 Ahorros ($_ahorroPercent%)')),
-                          DropdownMenuItem(value: 'lujos', child: Text('🛍️ Lujos ($_lujosPercent%)')),
+                        value: _selectedTransactionType,
+                        items: const [
+                          DropdownMenuItem(value: 'income', child: Text('💰 Ingreso')),
+                          DropdownMenuItem(value: 'expense', child: Text('💳 Gasto')),
                         ],
-                        onChanged: (v) => setState(() => _selectedCategory = v!),
+                        onChanged: (v) => setState(() => _selectedTransactionType = v!),
                       ),
-                    ],
-                    const SizedBox(height: 16),
-                    _textField(_amountController, 'Cantidad', prefix: '\$ '),
-                    const SizedBox(height: 16),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: TextFormField(
-                        controller: _descriptionController,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          hintText: 'Ej: Supermercado, Salario...',
-                          hintStyle: const TextStyle(color: Colors.white54),
-                          prefixStyle: const TextStyle(color: Colors.white),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [CurrencyInputFormatter()],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _selectedTransactionType == 'expense'
-                          ? _submitExpense
-                          : _submitIncome,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent.withOpacity(0.6),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add, size: 22),
-                          SizedBox(width: 8),
-                          Text('Agregar Transacción',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-              _glassCard(
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Ahorro Directo 💰',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(child: _textField(_directSavingsController, 'Cantidad a ahorrar', prefix: '\$ ')),
-                        const SizedBox(width: 12),
-                        Container(
-                          width: 54,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            color: Colors.blueAccent.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
-                            onPressed: _addDirectSavings,
-                          ),
+                      if (_selectedTransactionType == 'expense') ...[
+                        const SizedBox(height: 16),
+                        const Text('Categoría',
+                            style: TextStyle(color: Colors.white70, fontSize: 15)),
+                        const SizedBox(height: 8),
+                        _dropdownField(
+                          value: _selectedCategory,
+                          items: [
+                            DropdownMenuItem(value: 'basicos', child: Text('🏠 Necesidades ($_basicosPercent%)')),
+                            DropdownMenuItem(value: 'ahorro', child: Text('💰 Ahorros ($_ahorroPercent%)')),
+                            DropdownMenuItem(value: 'lujos', child: Text('🛍️ Lujos ($_lujosPercent%)')),
+                          ],
+                          onChanged: (v) => setState(() => _selectedCategory = v!),
                         ),
                       ],
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      _textField(_amountController, 'Cantidad', prefix: '\$ '),
+                      const SizedBox(height: 16),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: TextFormField(
+                          controller: _descriptionController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            hintText: 'Ej: Supermercado, Salario...',
+                            hintStyle: const TextStyle(color: Colors.white54),
+                            prefixStyle: const TextStyle(color: Colors.white),
+                          ),
+                          keyboardType: TextInputType.text,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _selectedTransactionType == 'expense'
+                            ? _submitExpense
+                            : _submitIncome,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent.withOpacity(0.6),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add, size: 22),
+                            SizedBox(width: 8),
+                            Text('Agregar Transacción',
+                                style: TextStyle(fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 65),
-            ],
+
+                const SizedBox(height: 20),
+                _glassCard(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Ahorro Directo 💰',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(child: _textField(_directSavingsController, 'Cantidad a ahorrar', prefix: '\$ ')),
+                          const SizedBox(width: 12),
+                          Container(
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: Colors.blueAccent.withOpacity(0.7),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                              onPressed: _addDirectSavings,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 65),
+              ],
+            ),
           ),
         ),
       ),
@@ -345,7 +352,7 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
       ),
       child: DropdownButtonFormField<String>(
         value: value,
-        dropdownColor: Colors.black87,
+        dropdownColor: Colors.white,
         decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
         style: const TextStyle(color: Colors.white),
         items: items,
