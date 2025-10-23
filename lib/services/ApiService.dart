@@ -201,6 +201,26 @@ class ApiService {
     }
   }
 
+  Future<bool> deleteSavingsGoal(String token, String goalId) async {
+    final url = Uri.parse('$baseUrlSaving/deleteGoal/$goalId');
+
+    final response = await http.delete(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      print('Error deleting goal: ${response.body}');
+      return false;
+    }
+  }
+
+
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("jwt");

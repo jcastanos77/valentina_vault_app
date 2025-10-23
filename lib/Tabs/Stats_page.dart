@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../Utils/ui_helpers.dart';
 import '../model/Transaction.dart';
 import '../services/ApiService.dart';
 import '../services/Auth.dart';
@@ -90,7 +91,7 @@ class _StatsPageState extends State<StatsPage> {
                         const Text('Ingresos',
                             style: TextStyle(color: Colors.white70)),
                         Text(
-                          '\$${_totalIncome.toStringAsFixed(2)}',
+                          '\$${formatNumber(_totalIncome)}',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -117,7 +118,7 @@ class _StatsPageState extends State<StatsPage> {
                         const Text('Gastos',
                             style: TextStyle(color: Colors.white70)),
                         Text(
-                          '\$${totalExpenses.toStringAsFixed(2)}',
+                          '\$${formatNumber(totalExpenses)}',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -163,7 +164,7 @@ class _StatsPageState extends State<StatsPage> {
                                       fontWeight: FontWeight.w500,
                                       color: Color(0xFF1E293B))),
                               Text(
-                                '\$${amount.toStringAsFixed(2)} (${percentage.toStringAsFixed(1)}%)',
+                                '\$${formatNumber(amount)} (${percentage.toStringAsFixed(1)}%)',
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF1E293B)),
@@ -245,7 +246,7 @@ class _StatsPageState extends State<StatsPage> {
                           ),
                           trailing: Text(
                             (transaction.type == 'income' ? '+' : '-') +
-                                '\$${transaction.amount.toStringAsFixed(2)}',
+                                '\$${formatNumber(transaction.amount)}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: transaction.type == 'income'

@@ -1,3 +1,13 @@
 [build]
-command = "flutter build web --release"
 publish = "build/web"
+command = "echo skip" # si subes por Drop; si Netlify hace build, pon tu build command
+
+[[headers]]
+for = "/*.js"
+[headers.values]
+Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+for = "/*"
+[headers.values]
+Cache-Control = "no-cache, no-store, must-revalidate"

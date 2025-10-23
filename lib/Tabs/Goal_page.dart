@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../Utils/CurrencyInputFormatter.dart';
+import '../Utils/ui_helpers.dart';
 import '../model/SavingsGoal.dart';
 import '../model/Transaction.dart';
 import '../services/ApiService.dart';
@@ -109,6 +111,21 @@ class _GoalPageState extends State<GoalPage> {
     }
   }
 
+  Future<void> _deleteGoal(String id) async {
+    try {
+      String? token = await _authService.getToken();
+      final data = await _apiService.deleteSavingsGoal(token!, id);
+
+      setState(() {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Se elimino la meta")),
+        );
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -128,6 +145,7 @@ class _GoalPageState extends State<GoalPage> {
         }
       },
       child: Container(
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -209,10 +227,7 @@ class _GoalPageState extends State<GoalPage> {
                                 ),
                                 keyboardType: const TextInputType.numberWithOptions(
                                     decimal: true),
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(
-                                      RegExp(r'^\d*\.?\d{0,2}')),
-                                ],
+                                inputFormatters: [CurrencyInputFormatter()],
                               ),
                               const SizedBox(height: 20),
                               SizedBox(
@@ -260,83 +275,119 @@ class _GoalPageState extends State<GoalPage> {
                     else
                       Column(
                         children: _goals.map((goal) {
-                          final progreso =
-                              currentSavings / (goal.amount > 0 ? goal.amount : 1);
-                          final porcentaje =
-                          (progreso.clamp(0, 1) * 100).toStringAsFixed(1);
+                          final progreso = currentSavings / (goal.amount > 0 ? goal.amount : 1);
+                          final porcentaje = (progreso.clamp(0, 1) * 100).toStringAsFixed(1);
 
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(vertical: 8),
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.65),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
-                                    width: 1,
-                                  ),
+                          return Dismissible(
+                            key: ValueKey(goal.name),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.8),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Icon(Icons.close, color: Colors.white, size: 28),
+                            ),
+                            confirmDismiss: (direction) async {
+                              // Mostrar alerta de confirmación
+                              final result = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Confirmar eliminación'),
+                                  content: Text('¿Quieres eliminar "${goal.name}"?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(false),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(true),
+                                      child: const Text('Aceptar'),
+                                    ),
+                                  ],
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      goal.name,
-                                      style: const TextStyle(
-                                        color: Color(0xFF1E293B),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                              );
+                              if (result == true) {
+                                await _deleteGoal(goal.id);
+                              }
+                              return result;
+                            },
+                            onDismissed: (_) {
+                              setState(() {
+                                _goals.remove(goal);
+                              });
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.65),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.3),
+                                      width: 1,
                                     ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text('Progreso:',
-                                            style: TextStyle(color: Colors.grey)),
-                                        Text(
-                                          '\$${currentSavings.toStringAsFixed(2)} / \$${goal.amount.toStringAsFixed(2)}',
-                                          style: const TextStyle(
-                                            color: Color(0xFF1E293B),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: LinearProgressIndicator(
-                                        value: progreso.clamp(0, 1),
-                                        minHeight: 8,
-                                        backgroundColor:
-                                        Colors.white.withOpacity(0.4),
-                                        valueColor:
-                                        AlwaysStoppedAnimation<Color>(primary),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Center(
-                                      child: Text(
-                                        '$porcentaje% completado',
-                                        style: TextStyle(
-                                          color: primary,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        goal.name,
+                                        style: const TextStyle(
+                                          color: Color(0xFF1E293B),
+                                          fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text('Progreso:',
+                                              style: TextStyle(color: Colors.grey)),
+                                          Text(
+                                            '\$${formatNumber(currentSavings)} / \$${formatNumber(goal.amount)}',
+                                            style: const TextStyle(
+                                              color: Color(0xFF1E293B),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: LinearProgressIndicator(
+                                          value: progreso.clamp(0, 1),
+                                          minHeight: 8,
+                                          backgroundColor: Colors.white.withOpacity(0.4),
+                                          valueColor: AlwaysStoppedAnimation<Color>(primary),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Center(
+                                        child: Text(
+                                          '$porcentaje% completado',
+                                          style: TextStyle(
+                                            color: primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           );
                         }).toList(),
                       ),
-
                     const SizedBox(height: 65),
                   ],
                 ),

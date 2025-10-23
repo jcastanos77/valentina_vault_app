@@ -179,6 +179,7 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
         }
       },
       child: Container(
+        height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
