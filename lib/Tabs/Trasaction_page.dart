@@ -352,7 +352,7 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
       ),
       child: DropdownButtonFormField<String>(
         value: value,
-        dropdownColor: Colors.white,
+        dropdownColor: Color(0xFF2a5298),
         decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
         style: const TextStyle(color: Colors.white),
         items: items,

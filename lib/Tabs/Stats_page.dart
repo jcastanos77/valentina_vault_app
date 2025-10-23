@@ -210,60 +210,53 @@ class _StatsPageState extends State<StatsPage> {
                           style: TextStyle(color: Colors.grey)),
                     )
                   else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount:
-                      _transactions.length > 8 ? 8 : _transactions.length,
-                      itemBuilder: (context, index) {
-                        Transaction transaction =
-                        _transactions.reversed.toList()[index];
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.6),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: Colors.white.withOpacity(0.3)),
-                          ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: lightBlue,
-                              child: Icon(
-                                transaction.category == 'basicos'
-                                    ? Icons.home
-                                    : transaction.category == 'ahorro'
-                                    ? Icons.savings
-                                    : Icons.shopping_bag,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            title: Text(
-                              transaction.description,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1E293B)),
-                            ),
-                            subtitle: Text(
-                              '${transaction.category.toUpperCase()} • ${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                            trailing: Text(
-                              (transaction.type == 'income' ? '+' : '-') +
-                                  '\$${transaction.amount.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: transaction.type == 'income'
-                                    ? lightBlue
-                                    : Colors.redAccent,
-                              ),
+                    Column(
+                      children: _transactions.reversed
+                          .take(8)
+                          .map((transaction) => Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        ),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: lightBlue,
+                            child: Icon(
+                              transaction.category == 'basicos'
+                                  ? Icons.home
+                                  : transaction.category == 'ahorro'
+                                  ? Icons.savings
+                                  : Icons.shopping_bag,
+                              color: Colors.white,
+                              size: 20,
                             ),
                           ),
-                        );
-                      },
-                    ),
+                          title: Text(
+                            transaction.description,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1E293B)),
+                          ),
+                          subtitle: Text(
+                            '${transaction.category.toUpperCase()} • ${transaction.date.day}/${transaction.date.month}/${transaction.date.year}',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          trailing: Text(
+                            (transaction.type == 'income' ? '+' : '-') +
+                                '\$${transaction.amount.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: transaction.type == 'income'
+                                  ? lightBlue
+                                  : Colors.redAccent,
+                            ),
+                          ),
+                        ),
+                      ))
+                          .toList(),
+                    )
                 ],
               ),
             ),
