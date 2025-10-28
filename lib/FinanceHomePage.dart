@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:valentinas_vault/Login.dart';
 import 'package:valentinas_vault/Tabs/Goal_page.dart';
 import 'package:valentinas_vault/Tabs/Home_page.dart';
+import 'package:valentinas_vault/Tabs/Motivation_page.dart';
 import 'package:valentinas_vault/Tabs/Stats_page.dart';
 import 'package:valentinas_vault/Tabs/Trasaction_page.dart';
 
@@ -25,6 +26,7 @@ class _FinanceHomePageState extends State<FinanceHomePage>
     TrasactionPage(),
     GoalPage(),
     StatsPage(),
+    MotivationPage()
   ];
 
   @override
@@ -115,6 +117,7 @@ class _FinanceHomePageState extends State<FinanceHomePage>
                         _buildNavItem(Icons.add_circle_rounded, 'Agregar', 1, isDark),
                         _buildNavItem(Icons.flag_rounded, 'Metas', 2, isDark),
                         _buildNavItem(Icons.bar_chart_rounded, 'Stats', 3, isDark),
+                        _buildNavItem(Icons.lightbulb, "Social", 4, isDark)
                       ],
                     ),
                   ),
