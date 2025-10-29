@@ -9,6 +9,7 @@ class ApiService {
   final String baseUrlUsers = "$API_BASE_URL/users";
   final String baseUrlSaving = "$API_BASE_URL/savings";
   final String baseUrlStats= "$API_BASE_URL/stats";
+  final String baseUrlMotivation = "$API_BASE_URL/motivation";
 
 
   Future<void> addIncome(double amount, String description,String token) async {
@@ -220,6 +221,41 @@ class ApiService {
     }
   }
 
+  Future<List<dynamic>> loadFeed(String token) async {
+      final url = Uri.parse('$baseUrlMotivation/feed');
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception("Error al obtener mensajes");
+      }
+  }
+
+  Future<void> postMessageMotivationale(String post, String token) async {
+    final url = Uri.parse("$baseUrlMotivation/post");
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({'content': post}),
+    ).timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      print("Comentario creado");
+    } else {
+      throw Exception("Error al agregar comentario: ${response.body}");
+    }
+  }
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();

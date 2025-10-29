@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/ApiService.dart';
+import '../services/Auth.dart';
 import 'Comments_page.dart';
 
 class MotivationPage extends StatefulWidget {
@@ -16,7 +18,8 @@ class _MotivationPageState extends State<MotivationPage> {
   List<dynamic> _posts = [];
   final TextEditingController _controller = TextEditingController();
   bool _isLoading = false;
-  final String baseUrl = 'http://localhost:8080/api/motivation'; // Cambia según tu backend
+  final _apiService = ApiService();
+  final _authService = AuthService();
 
   @override
   void initState() {
@@ -24,23 +27,14 @@ class _MotivationPageState extends State<MotivationPage> {
     _loadFeed();
   }
 
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt');
-  }
-
   Future<void> _loadFeed() async {
     setState(() => _isLoading = true);
-
+    String? token = await _authService.getToken();
     try {
-      final response = await http.get(Uri.parse('$baseUrl/feed'));
-      if (response.statusCode == 200) {
-        setState(() {
-          _posts = jsonDecode(response.body);
-        });
-      } else {
-        debugPrint('Error loading feed: ${response.body}');
-      }
+      final data = await _apiService.loadFeed(token!);
+      setState(() {
+        _posts = data;
+      });
     } catch (e) {
       debugPrint('Error: $e');
     } finally {
@@ -51,23 +45,15 @@ class _MotivationPageState extends State<MotivationPage> {
   Future<void> _createPost() async {
     if (_controller.text.trim().isEmpty) return;
 
-    final token = await _getToken();
-    if (token == null) return;
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/post'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token,
-      },
-      body: jsonEncode({'content': _controller.text}),
-    );
-
-    if (response.statusCode == 200) {
-      _controller.clear();
+    String? token = await _authService.getToken();
+    try {
+      await _apiService.postMessageMotivationale(_controller.text,token!);
+    setState(() {
+      print("listo");
       _loadFeed();
-    } else {
-      debugPrint('Error creating post: ${response.body}');
+    });
+    } catch (e) {
+      debugPrint('Error: $e');
     }
   }
 
