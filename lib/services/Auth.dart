@@ -45,7 +45,6 @@ class AuthService {
       final data = jsonDecode(response.body);
       final token = data['token'];
       final timeExpired = data['timeExpired'];
-      print(data);
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString("jwt", token);

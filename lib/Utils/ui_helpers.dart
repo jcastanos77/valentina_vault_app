@@ -27,3 +27,8 @@ import 'package:intl/intl.dart';
     final formatter = NumberFormat.currency(locale: 'es_MX', symbol: '\$');
     return formatter.format(value);
   }
+
+String formatShortDate(String isoString) {
+  final date = DateTime.parse(isoString);
+  return DateFormat('dd/MM/yyyy').format(date);
+}

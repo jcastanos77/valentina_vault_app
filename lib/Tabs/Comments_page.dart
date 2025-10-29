@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/ApiService.dart';
+import '../services/Auth.dart';
+
 class CommentsPage extends StatefulWidget {
   final String postId;
   final String userName;
@@ -23,7 +26,8 @@ class _CommentsPageState extends State<CommentsPage> {
   final TextEditingController _controller = TextEditingController();
   List<dynamic> _comments = [];
   bool _isLoading = false;
-  final String baseUrl = 'http://localhost:8080/api/motivation';
+  final _apiService = ApiService();
+  final _authService = AuthService();
 
   @override
   void initState() {
@@ -31,20 +35,15 @@ class _CommentsPageState extends State<CommentsPage> {
     _loadComments();
   }
 
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt');
-  }
-
   Future<void> _loadComments() async {
     setState(() => _isLoading = true);
+    String? token = await _authService.getToken();
+
     try {
-      final response = await http.get(Uri.parse('$baseUrl/comments/${widget.postId}'));
-      if (response.statusCode == 200) {
-        setState(() => _comments = jsonDecode(response.body));
-      } else {
-        debugPrint('Error loading comments: ${response.body}');
-      }
+      final data = await _apiService.loadComments(token!, widget.postId);
+      setState(() {
+        _comments = data;
+      });
     } catch (e) {
       debugPrint('Error: $e');
     } finally {
@@ -54,23 +53,13 @@ class _CommentsPageState extends State<CommentsPage> {
 
   Future<void> _addComment() async {
     if (_controller.text.trim().isEmpty) return;
-    final token = await _getToken();
-    if (token == null) return;
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/comment/${widget.postId}'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token,
-      },
-      body: jsonEncode({'content': _controller.text}),
-    );
-
-    if (response.statusCode == 200) {
+    String? token = await _authService.getToken();
+    try {
+      await _apiService.postComment(_controller.text, widget.postId,token!);
       _controller.clear();
       _loadComments();
-    } else {
-      debugPrint('Error adding comment: ${response.body}');
+    } catch (e) {
+      debugPrint('Error: $e');
     }
   }
 

@@ -250,10 +250,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     CategoryProgressCard('ahorro', expansePorcentage?['ahorroAssigned']?.toDouble() ?? 0.0, expansePorcentage?['ahorroSpent']?.toDouble() ?? 0.0, expansePorcentage?['ahorroPercentageSpent']?.toDouble() ?? 0.0),
                     const SizedBox(height: 16),
                     CategoryProgressCard('lujos', expansePorcentage?['lujosAssigned']?.toDouble() ?? 0.0, expansePorcentage?['lujosSpent']?.toDouble() ?? 0.0, expansePorcentage?['lujosPercentageSpent']?.toDouble() ?? 0.0),
-                    const SizedBox(height: 65),
+                    const SizedBox(height: 75),
                 if (_savingsGoal.name.isNotEmpty && _savingsGoal.amount > 0) ...[
                   _buildGoalCard(),
-                  SizedBox(height: 65),
+                  SizedBox(height: 75),
                 ]
 
                   ],

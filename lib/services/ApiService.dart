@@ -257,6 +257,42 @@ class ApiService {
     }
   }
 
+  Future<List<dynamic>> loadComments(String token, String postId) async {
+    final url = Uri.parse('$baseUrlMotivation/comments/${postId}');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Error al obtener mensajes");
+    }
+  }
+
+  Future<void> postComment(String comment, String postId,String token) async {
+    final url = Uri.parse("$baseUrlMotivation/comment/${postId}");
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({'content': comment}),
+    ).timeout(const Duration(seconds: 10));
+
+    if (response.statusCode == 200) {
+      print("Comentario creado");
+    } else {
+      throw Exception("Error al agregar comentario: ${response.body}");
+    }
+  }
+
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString("jwt");

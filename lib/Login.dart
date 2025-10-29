@@ -88,6 +88,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       );
     } else {
       _showSnackBar("Credenciales incorrectas", isError: true);
+      setState(() => _isLoading = false);
     }
   }
 
