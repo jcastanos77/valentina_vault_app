@@ -83,7 +83,7 @@ class _FinanceHomePageState extends State<FinanceHomePage>
             curve: Curves.easeOut,
             left: 20,
             right: 20,
-            bottom: isKeyboardOpen ? -100 : 18, // 👈 se esconde con teclado
+            bottom: isKeyboardOpen ? -100 : 18,
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
               opacity: isKeyboardOpen ? 0 : 1,
@@ -155,7 +155,7 @@ class _FinanceHomePageState extends State<FinanceHomePage>
             Icon(
               icon,
               size: 22,
-              color: isSelected ? Colors.black54 : Colors.white,
+              color: isSelected ? Colors.black54  :  _currentIndex == 3 ? Color(0xFF1e3c72) : Colors.white,
             ),
             const SizedBox(height: 2),
             Text(
@@ -163,7 +163,7 @@ class _FinanceHomePageState extends State<FinanceHomePage>
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? Colors.black54 : Colors.white,
+                color: isSelected ? Colors.black54 :  _currentIndex == 3 ? Color(0xFF1e3c72) : Colors.white,
               ),
             ),
           ],

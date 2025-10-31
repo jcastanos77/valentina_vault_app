@@ -18,6 +18,7 @@ class _MotivationPageState extends State<MotivationPage> {
   bool _isLoading = false;
   final _apiService = ApiService();
   final _authService = AuthService();
+  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -169,45 +170,102 @@ class _MotivationPageState extends State<MotivationPage> {
               ),
 
               /// Campo para escribir post motivacional
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 85,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 85,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOutCubic,
+                constraints: BoxConstraints(
+                  minWidth: 56,
+                  maxWidth: _isExpanded ? MediaQuery.of(context).size.width - 32 : 56,
+                ),
+                height: 56,
+                child: Stack(
+                  alignment: Alignment.centerRight,
+                  children: [
+                    // Fondo glass animado
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOutCubic,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _controller,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                hintText: 'Comparte algo motivacional...',
-                                hintStyle: TextStyle(color: Colors.white70),
-                                border: InputBorder.none,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.send_rounded,
-                                color: Colors.white, size: 26),
-                            onPressed: _createPost,
+                        color: Colors.white.withOpacity(_isExpanded ? 0.15 : 0.25),
+                        borderRadius: BorderRadius.circular(_isExpanded ? 20 : 28),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(_isExpanded ? 0.2 : 0.25)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(_isExpanded ? 20 : 28),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: _isExpanded ? 16 : 0,
+                                vertical: _isExpanded ? 6 : 0),
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: _isExpanded
+                                  ? Row(
+                                key: const ValueKey("expanded"),
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _controller,
+                                      style: const TextStyle(color: Colors.white),
+                                      decoration: const InputDecoration(
+                                        hintText:
+                                        'Comparte algo motivacional...',
+                                        hintStyle:
+                                        TextStyle(color: Colors.white70),
+                                        border: InputBorder.none,
+                                      ),
+                                      autofocus: true,
+                                      onSubmitted: (_) {
+                                        _createPost();
+                                        setState(() => _isExpanded = false);
+                                      },
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.send_rounded,
+                                        color: Colors.white, size: 26),
+                                    onPressed: () {
+
+                                      setState(() => _isExpanded = false);
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close_rounded,
+                                        color: Colors.white70, size: 24),
+                                    onPressed: () =>
+                                        setState(() => _isExpanded = false),
+                                  ),
+                                ],
+                              )
+                                  : IconButton(
+                                key: const ValueKey("button"),
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.white, size: 28),
+                                onPressed: () =>
+                                    setState(() => _isExpanded = true),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
+            )
             ],
           ),
         ),

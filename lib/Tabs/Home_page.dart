@@ -74,6 +74,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         expansePorcentage = data;
       });
+      _loadNotifications();
     } catch (e) {
       print("Error: $e");
     }
@@ -82,7 +83,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _loadSavings() async {
     String? token = await _authService.getToken();
     try {
-      final data = await ApiService().getTotalSavings(token!);
+      final data = await _apiService.getTotalSavings(token!);
       setState(() {
         _accumulatedSavings = data['totalAhorro'];
       });
@@ -95,7 +96,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _loadRules() async {
     String? token = await _authService.getToken();
     try {
-      final data = await ApiService().getRules(token!);
+      final data = await _apiService.getRules(token!);
       setState(() {
         _ahorroPercent = data['ahorroPercent'];
         _lujosPercent = data['lujosPercent'];
@@ -109,6 +110,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } catch (e) {
       debugPrint("Error: $e");
     }
+  }
+
+  Future<void> _loadNotifications() async {
+    String? token = await _authService.getToken();
+    try{
+      final data = await _apiService.loadNotifications(token!);
+      print(data);
+      final List notifications = data;
+      if (mounted){
+        _checkResetNotification(context, notifications);
+      }
+    }catch(e){
+          debugPrint("Error: $e");
+        }
   }
 
   @override
@@ -369,4 +384,104 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
+
+  void _checkResetNotification(BuildContext context, List notifications) {
+    for (var n in notifications) {
+      if (n['type'] == 'RESET_SUMMARY_REMINDER') {
+        _showResetDialog(context, n['id'], n['title'], n['message']);
+        break;
+      }
+    }
+  }
+
+
+  void _showResetDialog(BuildContext context, String notificationId, String title, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.calendar_today_rounded, color: Colors.blueAccent, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontSize: 16,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.refresh_rounded),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          String? token = await _authService.getToken();
+                          await _apiService.resetSummaries(token!);
+                          await _apiService.markNotificationAsRead(notificationId, token);
+                        },
+                        label: const Text(
+                          "Reiniciar",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: Colors.grey),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          "Más tarde",
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 }

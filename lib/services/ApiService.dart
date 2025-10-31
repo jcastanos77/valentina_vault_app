@@ -10,7 +10,8 @@ class ApiService {
   final String baseUrlSaving = "$API_BASE_URL/savings";
   final String baseUrlStats= "$API_BASE_URL/stats";
   final String baseUrlMotivation = "$API_BASE_URL/motivation";
-
+  final String baseUrlNotifications = "$API_BASE_URL/notifications";
+  final String baseUrlSummary = "$API_BASE_URL/monthly-summary";
 
   Future<void> addIncome(double amount, String description,String token) async {
     final url = Uri.parse("$baseUrl/income");
@@ -290,6 +291,47 @@ class ApiService {
       print("Comentario creado");
     } else {
       throw Exception("Error al agregar comentario: ${response.body}");
+    }
+  }
+
+  Future<void> resetSummaries(String token) async {
+
+    final response = await http.post(
+      Uri.parse('$baseUrlSummary/resetSummaries'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      print("se resetearion valores");
+    } else {
+      throw Exception("Error al hacer reset: ${response.body}");
+    }
+
+  }
+
+
+  Future<void> markNotificationAsRead(String notificationId, token) async {
+
+    await http.post(
+      Uri.parse('$baseUrlNotifications/mark-read/$notificationId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+  }
+
+  Future<List<dynamic>> loadNotifications(String token) async {
+
+    final response = await http.get(
+      Uri.parse('$baseUrlNotifications/unread'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Error traer notifiaciones: ${response.body}");
     }
   }
 
