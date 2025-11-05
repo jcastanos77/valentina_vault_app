@@ -44,12 +44,6 @@ class _GoalPageState extends State<GoalPage> {
     return spent;
   }
 
-  double get currentSavings {
-    double ahorroDisponible = budgets['ahorro'] ?? 0;
-    double ahorroGastado = spentByCategory['ahorro'] ?? 0;
-    return ahorroDisponible - ahorroGastado;
-  }
-
   Future<void> _addGoal() async {
     final amountText = _goalAmountController.text.trim();
     final name = _goalNameController.text.trim();
@@ -102,6 +96,7 @@ class _GoalPageState extends State<GoalPage> {
               name: goal["name"] ?? "",
               amount: (goal["targetAmount"] ?? 0).toDouble(),
               progress: (goal["progress"] ?? 0).toDouble(),
+              currentAmount: (goal["currentAmount"] ?? 0).toDouble(),
               id: goal["id"],
             ))
             .toList();
@@ -355,7 +350,7 @@ class _GoalPageState extends State<GoalPage> {
                     Column(
                       children: _goals.map((goal) {
                         final progreso =
-                            currentSavings / (goal.amount > 0 ? goal.amount : 1);
+                            goal.currentAmount / (goal.amount > 0 ? goal.amount : 1);
                         final porcentaje =
                         (progreso.clamp(0, 1) * 100).toStringAsFixed(1);
 
@@ -440,7 +435,7 @@ class _GoalPageState extends State<GoalPage> {
                                             style: TextStyle(
                                                 color: Colors.black54)),
                                         Text(
-                                          '\$${formatNumber(currentSavings)} / \$${formatNumber(goal.amount)}',
+                                          '\$${formatNumber(goal.currentAmount)} / \$${formatNumber(goal.amount)}',
                                           style: const TextStyle(
                                             color: Color(0xFF1E293B),
                                             fontWeight: FontWeight.w600,

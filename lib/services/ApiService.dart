@@ -90,10 +90,11 @@ class ApiService {
     }
   }
 
-  Future<void> addDirectSaving(String token, double amount) async {
-    final url = Uri.parse("$baseUrl/saving");
+  Future<void> addDirectSaving(String token, double amount, String id) async {
+    final url = Uri.parse("$baseUrl/saving/$id");
 
     try {
+      print("try response");
       final response = await http
           .post(
         url,
@@ -104,8 +105,7 @@ class ApiService {
         body: jsonEncode({
           "amount": amount,
         }),
-      )
-          .timeout(const Duration(seconds: 10));
+      ).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         print("✅ Direct saving added: ${response.body}");

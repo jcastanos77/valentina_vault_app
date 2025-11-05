@@ -31,8 +31,10 @@ class _MotivationPageState extends State<MotivationPage> {
     String? token = await _authService.getToken();
     try {
       final data = await _apiService.loadFeed(token!);
-      print(data);
-      setState(() => _posts = data);
+      setState(() {
+        _posts = data;
+        _isExpanded = false;
+      });
     } catch (e) {
       debugPrint('Error: $e');
     } finally {
@@ -238,8 +240,7 @@ class _MotivationPageState extends State<MotivationPage> {
                                     icon: const Icon(Icons.send_rounded,
                                         color: Colors.white, size: 26),
                                     onPressed: () {
-
-                                      setState(() => _isExpanded = false);
+                                      _createPost();
                                     },
                                   ),
                                   IconButton(

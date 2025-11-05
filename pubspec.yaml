@@ -17,6 +17,7 @@ dependencies:
   google_fonts: ^6.2.1
   flutter_launcher_icons: ^0.13.1
   cupertino_icons: ^1.0.8
+  lottie: ^3.3.2
 
 dev_dependencies:
   flutter_test:
@@ -27,20 +28,15 @@ dev_dependencies:
 flutter:
 
   uses-material-design: true
-
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  assets:
+     - assets/loader/loading.json
   #   - images/a_dot_ham.jpeg
 flutter_launcher_icons:
     android: "launcher_icon"
     ios: true
-    image_path: "assets/icon/iconPrincipal.png" # Ruta de tu archivo de icono
+    image_path: "assets/icon/iconPrincipal.png"
 
     # Configuración específica para Web:
     web:
       generate: true
-      image_path: "assets/icon/iconPrincipal.png" # La misma imagen
-      # Opcional: colores de fondo/tema para la web (PWA)
-      # background_color: "#ffffff"
-      # theme_color: "#000000"
+      image_path: "assets/icon/iconPrincipal.png"

@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:valentinas_vault/Utils/showSnackBar.dart';
+import 'package:valentinas_vault/components/FullScreen_loading.dart';
 
 import '../Utils/CurrencyInputFormatter.dart';
-import '../Utils/ModernCard.dart';
+import '../model/SavingsGoal.dart';
 import '../model/Transaction.dart';
 import '../services/ApiService.dart';
 import '../services/Auth.dart';
@@ -30,8 +31,9 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
   int _ahorroPercent = 0;
   int _lujosPercent = 0;
 
+  String _selectedGoalId = "0";
   late AnimationController _animationController;
-
+  List<SavingsGoal> _goals = [];
   List<Transaction> _transactions = [];
   String _selectedTransactionType = 'expense';
   String _selectedCategory = 'basicos';
@@ -47,29 +49,43 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
   }
 
   Future<void> _addDirectSavings() async{
-    double amount = double.tryParse(_directSavingsController.text) ?? 0;
-    if (amount <= 0) return;
+    final amountText = _directSavingsController.text.trim();
+    print(amountText);
+    final amount = double.tryParse(amountText.replaceAll(",", ""));
+    print(amount);
+    if (amount == null) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Monto inválido")),
+      );
+
+      return;
+    }
 
     try {
       String? token = await _authService.getToken();
-      await _apiService.addDirectSaving(token!, amount);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Ahorro agregado ✅")),
-      );
+      await _apiService.addDirectSaving(token!, amount, _selectedGoalId);
 
       _animationController.forward().then((_) => _animationController.reset());
       _amountController.clear();
       _descriptionController.clear();
+
     } catch (e) {
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
     }
     _directSavingsController.clear();
-    showSnackBar('Ahorro agregado 💰', const Color(0xFF3498DB), context);
+    Navigator.of(context).pop();
   }
 
   Future<void> _submitIncome() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const FullScreenLoading(),
+    );
     final amountText = _amountController.text.trim();
     final description = _descriptionController.text.trim();
 
@@ -77,14 +93,15 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Por favor ingresa monto y descripción")),
       );
+      Navigator.pop(context);
       return;
     }
-    print(amountText);
     final amount = double.tryParse(amountText.replaceAll(",", ""));
     if (amount == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Monto inválido")),
       );
+      Navigator.pop(context);
       return;
     }
 
@@ -100,16 +117,23 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
       _animationController.forward().then((_) => _animationController.reset());
       _amountController.clear();
       _descriptionController.clear();
+      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
+      Navigator.pop(context);
     } finally {
       setState(() => isLoading = false);
     }
   }
 
   Future<void> _submitExpense() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const FullScreenLoading(),
+    );
     final amountText = _amountController.text.trim();
     final description = _descriptionController.text.trim();
 
@@ -125,6 +149,7 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Monto inválido")),
       );
+      Navigator.pop(context);
       return;
     }
 
@@ -140,14 +165,40 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
       _animationController.forward().then((_) => _animationController.reset());
       _amountController.clear();
       _descriptionController.clear();
+      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
+      Navigator.pop(context);
     } finally {
       setState(() => isLoading = false);
     }
   }
+
+  Future<void> _getGoals() async {
+    try {
+      String? token = await _authService.getToken();
+      final data = await _apiService.getGoals(token!);
+
+      setState(() {
+        _goals = data
+            .map<SavingsGoal>((goal) =>
+            SavingsGoal(
+              name: goal["name"] ?? "",
+              amount: (goal["targetAmount"] ?? 0).toDouble(),
+              progress: (goal["progress"] ?? 0).toDouble(),
+              remainingAmount: (goal["remainingAmount"] ?? 0).toDouble(),
+              id: goal["id"],
+            ))
+            .toList();
+      });
+
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
 
   // Mostrar diálogo de transferencia mensual
   Future <void>_setPorcentages() async {
@@ -167,6 +218,7 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
       vsync: this,
     );
     _setPorcentages();
+    _getGoals();
   }
 
   @override
@@ -283,36 +335,124 @@ class _TrasactionPageState extends State<TrasactionPage> with SingleTickerProvid
                 ),
 
                 const SizedBox(height: 20),
-                _glassCard(
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Ahorro Directo 💰',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              _glassCard(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Aportación a tu meta 💰',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(child: _textField(_directSavingsController, 'Cantidad a ahorrar', prefix: '\$ ')),
-                          const SizedBox(width: 12),
-                          Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: Colors.blueAccent.withOpacity(0.7),
-                              borderRadius: BorderRadius.circular(16),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 📍 Dropdown de metas (ya cargadas desde el backend)
+                    if (_goals.isNotEmpty) ...[
+                      const Text(
+                        'Selecciona una meta:',
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            dropdownColor: const Color(0xFF1E293B),
+                            icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                            value: _goals.any((g) => g.id == _selectedGoalId) ? _selectedGoalId : null,
+                            hint: const Text(
+                              'Selecciona una meta',
+                              style: TextStyle(color: Colors.white70),
                             ),
-                            child: IconButton(
-                              icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
-                              onPressed: _addDirectSavings,
-                            ),
+                            items: _goals.map((goal) {
+                              return DropdownMenuItem<String>(
+                                value: goal.id,
+                                child: Text(
+                                  goal.name,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedGoalId = value!;
+                              });
+                            },
                           ),
-                        ],
+                        ),
+                      ),
+                    ] else ...[
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          'No tienes metas registradas 💤',
+                          style: TextStyle(color: Colors.white70),
+                        ),
                       ),
                     ],
-                  ),
+
+                    const SizedBox(height: 16),
+
+                    // 💵 Campo de texto + botón
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _textField(
+                            _directSavingsController,
+                            _goals.isNotEmpty && _goals.any((g) => g.id == _selectedGoalId)
+                                ? 'Cantidad para "${_goals.firstWhere((g) => g.id == _selectedGoalId).name}"'
+                                : 'Cantidad para meta',
+                            prefix: '\$ ',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: Colors.blueAccent.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+                            onPressed: (){
+                              if (_goals.firstWhere((g) => g.id == _selectedGoalId).remainingAmount < int.parse(_directSavingsController.text.replaceAll(",", ""))){
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("El monto es mayor al restante de la meta")),
+                                );
+                              }else{
+                                _addDirectSavings();
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (_) => const FullScreenLoading(),
+                                );
+                              }
+
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+
+                  ],
                 ),
+              ),
                 const SizedBox(height: 65),
               ],
             ),
