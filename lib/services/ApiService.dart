@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Utils/Constants.dart';
+import '../model/Streak.dart';
 
 class ApiService {
   final String baseUrl = "$API_BASE_URL/transactions";
@@ -12,6 +13,7 @@ class ApiService {
   final String baseUrlMotivation = "$API_BASE_URL/motivation";
   final String baseUrlNotifications = "$API_BASE_URL/notifications";
   final String baseUrlSummary = "$API_BASE_URL/monthly-summary";
+  final String baseUrlStreak = "$API_BASE_URL/streak";
 
   Future<void> addIncome(double amount, String description,String token) async {
     final url = Uri.parse("$baseUrl/income");
@@ -332,6 +334,42 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception("Error traer notifiaciones: ${response.body}");
+    }
+  }
+
+  Future<Map<String, dynamic>> getStreak(String token) async {
+    final url = Uri.parse('$baseUrlStreak/userStreak');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Error al obtener las rachas");
+    }
+  }
+
+  Future<Map<String, dynamic>> getWeeklyRanking(String token) async {
+    final url = Uri.parse('$baseUrlStreak/ranking');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Error al obtener las rachas");
     }
   }
 

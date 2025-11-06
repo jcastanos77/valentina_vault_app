@@ -30,6 +30,9 @@ flutter:
   uses-material-design: true
   assets:
      - assets/loader/loading.json
+     - assets/loader/streak_fire.json
+     - assets/loader/fire_gold.json
+     - assets/loader/fire.json
   #   - images/a_dot_ham.jpeg
 flutter_launcher_icons:
     android: "launcher_icon"

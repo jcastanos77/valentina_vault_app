@@ -1,11 +1,15 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:valentinas_vault/Utils/CategoryProgressCard.dart';
 import 'package:valentinas_vault/Utils/ui_helpers.dart';
 
+import '../components/StreakAnimationOverlay.dart';
+import '../components/StreakCard.dart';
 import '../model/SavingsGoal.dart';
+import '../model/Streak.dart';
 import '../model/Transaction.dart';
 import '../services/ApiService.dart';
 import '../services/Auth.dart';
@@ -23,6 +27,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final _authService = AuthService();
   Map<String, dynamic>? summary;
   Map<String, dynamic>? expansePorcentage;
+  Map<String, dynamic>? _streakInfo;
+  bool _showStreakAnimation = false;
 
   double _totalIncome = 0;
   double _accumulatedSavings = 0;
@@ -116,14 +122,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     String? token = await _authService.getToken();
     try{
       final data = await _apiService.loadNotifications(token!);
-      print(data);
+
       final List notifications = data;
       if (mounted){
         _checkResetNotification(context, notifications);
       }
+      _loadStreak();
     }catch(e){
           debugPrint("Error: $e");
         }
+  }
+
+  Future<void> _loadStreak() async {
+    String? token = await _authService.getToken();
+    try{
+      final streakInfo = await _apiService.getStreak(token!);
+      setState(() {
+        _streakInfo = streakInfo;
+      });
+      final currentStreak = streakInfo['currentStreak'] ?? 0;
+      checkAndShowStreakAnimation(currentStreak);
+    }catch(e){
+      debugPrint("Error: $e");
+    }
   }
 
   @override
@@ -147,139 +168,158 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFF1e3c72),
-              Color(0xFF2a5298),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeController,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Saludo y fecha
-                    Text(
-                      getGreeting(),
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        color: Colors.white70,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Column(
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF1e3c72),
+                  Color(0xFF2a5298),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: SafeArea(
+              child: FadeTransition(
+                opacity: _fadeController,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: SingleChildScrollView(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // Saludo y fecha
                         Text(
-                          'Tu resumen financiero',
+                          getGreeting(),
                           style: GoogleFonts.poppins(
-                            fontSize: 26,
+                            fontSize: 18,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        if (_streakInfo != null) ...[
+                          const SizedBox(height: 10),
+                          StreakCard(streakInfo: _streakInfo),
+                        ],
+                        const SizedBox(height: 6),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Tu resumen financiero',
+                              style: GoogleFonts.poppins(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  color: Colors.white.withOpacity(0.15),
+                                  child: Text(
+                                    '${getMonthName(DateTime.now().month)} ${DateTime.now().year}',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 30),
+
+                        // Tarjeta principal con blur
+                        _buildGlassCard(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Balance total',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white70,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const Icon(Icons.wallet_rounded, color: Colors.white70),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                '\$${formatNumber(summary?['totalIncome']?.toDouble() ?? 0.0)}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              _buildProgressBar(
+                                basicos: 50,
+                                ahorro: 30,
+                                lujos: 20,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        Text(
+                          'Categorías',
+                          style: GoogleFonts.poppins(
+                            fontSize: 22,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
                         ),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              color: Colors.white.withOpacity(0.15),
-                              child: Text(
-                                '${getMonthName(DateTime.now().month)} ${DateTime.now().year}',
-                                style: GoogleFonts.inter(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        const SizedBox(height: 16),
+
+                        // Tarjetas de categorías
+                        CategoryProgressCard('basicos', expansePorcentage?['basicosAssigned'].toDouble() ?? 0.0, expansePorcentage?['basicosSpent']?.toDouble() ?? 0.0, expansePorcentage?['basicosPercentageSpent']?.toDouble() ?? 0.0),
+                        const SizedBox(height: 16),
+                        CategoryProgressCard('ahorro', expansePorcentage?['ahorroAssigned']?.toDouble() ?? 0.0, expansePorcentage?['ahorroSpent']?.toDouble() ?? 0.0, expansePorcentage?['ahorroPercentageSpent']?.toDouble() ?? 0.0),
+                        const SizedBox(height: 16),
+                        CategoryProgressCard('lujos', expansePorcentage?['lujosAssigned']?.toDouble() ?? 0.0, expansePorcentage?['lujosSpent']?.toDouble() ?? 0.0, expansePorcentage?['lujosPercentageSpent']?.toDouble() ?? 0.0),
+                        const SizedBox(height: 75),
+                    if (_savingsGoal.name.isNotEmpty && _savingsGoal.amount > 0) ...[
+                      _buildGoalCard(),
+                      SizedBox(height: 75),
+                    ]
+
                       ],
                     ),
-
-                    const SizedBox(height: 30),
-
-                    // Tarjeta principal con blur
-                    _buildGlassCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Balance total',
-                                style: GoogleFonts.inter(
-                                  color: Colors.white70,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const Icon(Icons.wallet_rounded, color: Colors.white70),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            '\$${formatNumber(summary?['totalIncome']?.toDouble() ?? 0.0)}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 40,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          _buildProgressBar(
-                            basicos: 50,
-                            ahorro: 30,
-                            lujos: 20,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    Text(
-                      'Categorías',
-                      style: GoogleFonts.poppins(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Tarjetas de categorías
-                    CategoryProgressCard('basicos', expansePorcentage?['basicosAssigned'].toDouble() ?? 0.0, expansePorcentage?['basicosSpent']?.toDouble() ?? 0.0, expansePorcentage?['basicosPercentageSpent']?.toDouble() ?? 0.0),
-                    const SizedBox(height: 16),
-                    CategoryProgressCard('ahorro', expansePorcentage?['ahorroAssigned']?.toDouble() ?? 0.0, expansePorcentage?['ahorroSpent']?.toDouble() ?? 0.0, expansePorcentage?['ahorroPercentageSpent']?.toDouble() ?? 0.0),
-                    const SizedBox(height: 16),
-                    CategoryProgressCard('lujos', expansePorcentage?['lujosAssigned']?.toDouble() ?? 0.0, expansePorcentage?['lujosSpent']?.toDouble() ?? 0.0, expansePorcentage?['lujosPercentageSpent']?.toDouble() ?? 0.0),
-                    const SizedBox(height: 75),
-                if (_savingsGoal.name.isNotEmpty && _savingsGoal.amount > 0) ...[
-                  _buildGoalCard(),
-                  SizedBox(height: 75),
-                ]
-
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+
+          if (_showStreakAnimation)
+            const StreakAnimationOverlay(),
+
+        ],
       ),
     );
   }
+  void _triggerStreakAnimation() {
+    setState(() => _showStreakAnimation = true);
+    Future.delayed(const Duration(seconds: 5), () {
+      setState(() => _showStreakAnimation = false);
+    });
+  }
+
 
   Widget _buildGlassCard({required Widget child}) {
     return ClipRRect(
@@ -394,6 +434,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> saveLastStreakAnimationDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('last_streak_animation_date', DateTime.now().toIso8601String());
+  }
+
+  Future<void> checkAndShowStreakAnimation(int currentStreak) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    int lastStreak = prefs.getInt('last_streak_count') ?? 0;
+    String? lastAnimationDate = prefs.getString('last_streak_animation_date');
+
+    final today = DateTime.now();
+    final lastDate = lastAnimationDate != null ? DateTime.parse(lastAnimationDate) : null;
+
+    final alreadyShownToday = lastDate != null &&
+        lastDate.year == today.year &&
+        lastDate.month == today.month &&
+        lastDate.day == today.day;
+
+    if ((currentStreak > lastStreak || currentStreak == 1) && !alreadyShownToday) {
+      _triggerStreakAnimation();
+      await prefs.setString('last_streak_animation_date', today.toIso8601String());
+    }
+
+    await prefs.setInt('last_streak_count', currentStreak);
+  }
 
   void _showResetDialog(BuildContext context, String notificationId, String title, String message) {
     showDialog(

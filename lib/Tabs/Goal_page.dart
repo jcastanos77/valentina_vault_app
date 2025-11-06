@@ -85,6 +85,7 @@ class _GoalPageState extends State<GoalPage> {
   }
 
   Future<void> _getGoals() async {
+
     try {
       String? token = await _authService.getToken();
       final data = await _apiService.getGoals(token!);
@@ -188,7 +189,6 @@ class _GoalPageState extends State<GoalPage> {
                             ),
                             const SizedBox(height: 14),
 
-                            // Nombre
                             TextFormField(
                               controller: _goalNameController,
                               style: const TextStyle(color: Colors.white),
@@ -207,7 +207,6 @@ class _GoalPageState extends State<GoalPage> {
                             ),
                             const SizedBox(height: 12),
 
-                            // Monto
                             TextFormField(
                               controller: _goalAmountController,
                               style: const TextStyle(color: Colors.white),
@@ -230,7 +229,6 @@ class _GoalPageState extends State<GoalPage> {
                             ),
                             const SizedBox(height: 16),
 
-                            // Buttons row
                             Row(
                               children: [
                                 Expanded(
@@ -399,75 +397,79 @@ class _GoalPageState extends State<GoalPage> {
                               _goals.remove(goal);
                             });
                           },
-                          child: ClipRRect(
+                          child: InkWell(
                             borderRadius: BorderRadius.circular(20),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(vertical: 8),
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.65),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
-                                    width: 1,
+                            onTap: () => _showAddContributionModal(goal),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(vertical: 8),
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.65),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.3),
+                                      width: 1,
+                                    ),
                                   ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      goal.name,
-                                      style: const TextStyle(
-                                        color: Color(0xFF1E293B),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text('Progreso:',
-                                            style: TextStyle(
-                                                color: Colors.black54)),
-                                        Text(
-                                          '\$${formatNumber(goal.currentAmount)} / \$${formatNumber(goal.amount)}',
-                                          style: const TextStyle(
-                                            color: Color(0xFF1E293B),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    ClipRRect(
-                                      borderRadius:
-                                      BorderRadius.circular(10),
-                                      child: LinearProgressIndicator(
-                                        value: progreso.clamp(0, 1),
-                                        minHeight: 8,
-                                        backgroundColor:
-                                        Colors.white.withOpacity(0.4),
-                                        valueColor:
-                                        AlwaysStoppedAnimation<Color>(
-                                            primary),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Center(
-                                      child: Text(
-                                        '$porcentaje% completado',
-                                        style: TextStyle(
-                                          color: primary,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        goal.name,
+                                        style: const TextStyle(
+                                          color: Color(0xFF1E293B),
+                                          fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text('Progreso:',
+                                              style: TextStyle(
+                                                  color: Colors.black54)),
+                                          Text(
+                                            '\$${formatNumber(goal.currentAmount)} / \$${formatNumber(goal.amount)}',
+                                            style: const TextStyle(
+                                              color: Color(0xFF1E293B),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      ClipRRect(
+                                        borderRadius:
+                                        BorderRadius.circular(10),
+                                        child: LinearProgressIndicator(
+                                          value: progreso.clamp(0, 1),
+                                          minHeight: 8,
+                                          backgroundColor:
+                                          Colors.white.withOpacity(0.4),
+                                          valueColor:
+                                          AlwaysStoppedAnimation<Color>(
+                                              primary),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Center(
+                                        child: Text(
+                                          '$porcentaje% completado',
+                                          style: TextStyle(
+                                            color: primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -484,4 +486,122 @@ class _GoalPageState extends State<GoalPage> {
       ),
     );
   }
+
+  void _showAddContributionModal(SavingsGoal goal) {
+    final TextEditingController _amountController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 15,
+            left: 20,
+            right: 20,
+            top: 10,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withOpacity(0.2)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Aportar a "${goal.name}"',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _amountController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        prefixText: '\$ ',
+                        hintText: 'Ingresa cantidad a aportar',
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.06),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                      ),
+                      keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [CurrencyInputFormatter()],
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      height: 50,
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final text = _amountController.text.trim();
+                          final amount = double.tryParse(text.replaceAll(',', ''));
+
+                          if (amount == null || amount <= 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Ingresa una cantidad válida')),
+                            );
+                            return;
+                          }
+
+                          try {
+                            Navigator.pop(context);
+
+                            String? token = await _authService.getToken();
+                            await _apiService.addDirectSaving(
+                              token!, amount, goal.id);
+
+                            await _getGoals();
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF667EEA),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: const Icon(Icons.savings_rounded),
+                        label: const Text(
+                          'Aportar',
+                          style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 }

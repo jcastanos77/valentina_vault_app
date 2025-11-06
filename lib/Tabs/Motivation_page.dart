@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import '../Utils/ui_helpers.dart';
 import '../services/ApiService.dart';
 import '../services/Auth.dart';
@@ -120,14 +121,8 @@ class _MotivationPageState extends State<MotivationPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
 
-                              Text(
-                                post['userName'] ?? "Usuario",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
+                              _buildUserHeader(post),
+
                               const SizedBox(height: 6),
 
                               // ✍️ Contenido del post
@@ -273,4 +268,57 @@ class _MotivationPageState extends State<MotivationPage> {
       ),
     );
   }
+
+  Widget _buildUserHeader(Map<String, dynamic> post) {
+    final int streak = post['currentStreak'] ?? 0;
+    final int bestStreak = post['bestStreak'] ?? 0;
+
+    final bool isPro = streak >= 7;
+    final bool isLegend = streak >= bestStreak && streak > 10;
+
+    return Row(
+      children: [
+        // Nombre del usuario
+        Text(
+          post['userName'],
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isLegend ? Colors.amber : Colors.white,
+            shadows: isLegend
+                ? [const Shadow(color: Colors.amberAccent, blurRadius: 12)]
+                : [],
+          ),
+        ),
+
+        const SizedBox(width: 8),
+
+        // Ícono de racha
+        if (streak != 0)
+        AnimatedScale(
+          duration: const Duration(milliseconds: 400),
+          scale: isLegend ? 1.4 : 1.0,
+          child: Row(
+            children: [
+              Lottie.asset(
+                isLegend
+                    ? 'assets/loader/fire_gold.json'
+                    : 'assets/loader/fire.json',
+                width: isPro ? 30 : 20,
+                height: isPro ? 30 : 20,
+                repeat: true,
+              ),
+              Text(
+                '$streak',
+                style: TextStyle(
+                  color: isPro ? Colors.orangeAccent : Colors.grey,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
 }
